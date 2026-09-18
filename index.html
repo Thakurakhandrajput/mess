@@ -2,36 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mess Gate Entry</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #121212; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: #121212; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
         
-        /* LOGIN SCREEN STYLES */
+        /* LOGIN SCREEN STYLES (Exact Match) */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-box { background: #1a1c1e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; width: 90%; max-width: 350px; }
-        .login-box h2 { color: #fff; margin: 0 0 10px 0; }
+        .login-box { background: #1a1c1e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; width: 90%; max-width: 350px; border: 1px solid #2a2d31; }
+        .login-box h2 { color: #fff; margin: 0 0 10px 0; font-size: 24px; }
         .login-box p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
         .login-box input { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #2a2d31; color: #fff; margin-bottom: 20px; font-size: 18px; text-align: center; outline: none; letter-spacing: 3px; }
         .login-box input:focus { border: 2px solid #5cb85c; }
-        .login-box button { width: 100%; background: #5cb85c; color: #fff; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .login-box button { width: 100%; background: #5cb85c; color: #fff; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(92, 184, 92, 0.3); }
         .login-box button:active { transform: scale(0.95); background: #449d44; }
 
-        /* MAIN APP (Hidden initially) */
-        #main-app { display: none; width: 100%; display: flex; justify-content: center; }
+        /* MAIN APP */
+        #main-app { width: 100%; display: none; justify-content: center; }
 
-        /* Main Keypad Card */
-        .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Main Keypad Card (Exact Original Look) */
+        .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; }
         
         .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
-        .header p { margin: 5px 0 0 0; font-size: 14px; font-weight: bold; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; color: #fff; }
+        #session-display { margin: 5px 0 0 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         
-        #display { font-size: 32px; background: #2a2d31; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 25px; letter-spacing: 5px; font-weight: bold; height: 65px; display: flex; align-items: center; justify-content: center; }
+        #display { font-size: 32px; background: #2a2d31; color: #fff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 25px; letter-spacing: 5px; font-weight: bold; height: 65px; display: flex; align-items: center; justify-content: center; }
         
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .btn { background: #32363b; color: #fff; font-size: 24px; font-weight: 500; padding: 18px; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
@@ -43,7 +43,7 @@
         .btn-enter { background: #5cb85c; } 
         .btn-enter:active { background: #449d44; }
 
-        /* POPUP OVERLAY */
+        /* POPUP OVERLAY (Student Details) */
         #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         
         .popup-box { width: 100%; max-width: 350px; background: #1e2227; border-radius: 20px; padding: 25px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.9); animation: popIn 0.3s ease-out; border: 1px solid #333; }
@@ -57,14 +57,14 @@
         .bg-active { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid #4caf50; }
         .bg-due { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid #ff9800; }
         .bg-banned { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+        .bg-pause { background: rgba(0, 122, 255, 0.2); color: #007AFF; border: 1px solid #007AFF; }
 
         #popup-action-area { margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
         
-        .btn-verify-now { width: 100%; background: #4caf50; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); }
-        .btn-verify-now:active { transform: scale(0.97); }
+        .btn-verify-now { width: 100%; background: #4caf50; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-verify-due { width: 100%; background: transparent; color: #ff9800; border: 2px solid #ff9800; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 10px; }
         
         .msg-already { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 2px dashed #f44336; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
-        
         .msg-success { background: rgba(76, 175, 80, 0.1); color: #4caf50; border: 2px solid #4caf50; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
         
         .close-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
@@ -72,7 +72,7 @@
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN SCREEN (Exact Original Look) -->
 <div id="login-overlay">
     <div class="login-box">
         <h2>Gate Security</h2>
@@ -82,12 +82,12 @@
     </div>
 </div>
 
-<!-- MAIN APP (Locked Initially) -->
-<div id="main-app" style="display: none;">
+<!-- MAIN APP -->
+<div id="main-app">
     <div class="card">
         <div class="header">
             <h1>Mess Gate Entry</h1>
-            <p id="session-display" style="color: #aaa;">Checking Time...</p>
+            <p id="session-display" style="color: #d9534f;">⏳ Checking Time...</p>
         </div>
 
         <div id="display">-</div>
@@ -117,32 +117,85 @@
     <div class="popup-box">
         <button class="close-btn" onclick="closePopup()">✖</button>
         
-        <img id="pop-photo" class="popup-avatar" src="https://via.placeholder.com/150" alt="Photo">
+        <img id="pop-photo" class="popup-avatar" src="" alt="Photo">
         <h2 id="pop-name" class="popup-name">Loading...</h2>
         <p id="pop-room" class="popup-room">Room: - | Code: -</p>
         
         <div id="pop-status" class="status-badge bg-active">Active</div>
         <div style="font-size:12px; color:#aaa; margin-bottom:5px;">Fee Valid Till: <b id="pop-fee" style="color:#fff;">-</b></div>
-        <div style="font-size:12px; color:#aaa; font-weight:bold; color:#2196f3;" id="pop-session">Session</div>
+        <div style="font-size:12px; font-weight:bold; color:#2196f3;" id="pop-session">Session</div>
 
         <div id="popup-action-area"></div>
     </div>
 </div>
 
 <script>
-    // --- 1. SECURITY LOGIC ---
-    function securePass(p) { return btoa(btoa(p)); }
-    
+    const firebaseConfig = {
+      apiKey: "AIzaSyAA2P2IM5aPzJj10XMGLn_9BMSJhKeMGiE",
+      authDomain: "obc-mess-system.firebaseapp.com",
+      projectId: "obc-mess-system",
+      storageBucket: "obc-mess-system.firebasestorage.app",
+      messagingSenderId: "501219370424",
+      appId: "1:501219370424:web:1dddaefc10e8bd21efdb4d"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let inputCode = "";
+    let globalStudentData = null; 
+
+    // Dynamic Timings (Defaults if Firestore is loading)
+    let messTimings = { bStart: 8, bEnd: 10, lStart: 13, lEnd: 15, dStart: 20, dEnd: 22 };
+    let masterPin = "Admin@123";
+
+    // Fetch dynamic timings and PIN from Firestore on load
+    async function loadGateConfig() {
+        try {
+            const tDoc = await db.collection("config").doc("timings").get();
+            if(tDoc.exists) messTimings = tDoc.data();
+
+            const pDoc = await db.collection("config").doc("gate_security").get();
+            if(pDoc.exists && pDoc.data().pin) masterPin = pDoc.data().pin;
+        } catch(e) {
+            console.log("Using default config");
+        }
+    }
+    loadGateConfig();
+
+    // Session Logic using dynamic Firestore timings
+    function getMealSession() {
+        const h = new Date().getHours();
+        if (h >= messTimings.bStart && h < messTimings.bEnd) return "Breakfast";
+        if (h >= messTimings.lStart && h < messTimings.lEnd) return "Lunch";
+        if (h >= messTimings.dStart && h < messTimings.dEnd) return "Dinner";
+        return "Closed";
+    }
+
+    // Live Header Update
+    setInterval(() => {
+        const session = getMealSession();
+        const display = document.getElementById("session-display");
+        if(session === "Closed") {
+            display.innerText = "⛔ MESS CLOSED";
+            display.style.color = "#d9534f";
+        } else {
+            display.innerText = "✅ " + session.toUpperCase() + " SESSION ON";
+            display.style.color = "#5cb85c";
+        }
+    }, 1000);
+
+    // --- SECURITY LOGIN ---
     window.onload = () => {
         if(sessionStorage.getItem("gate_auth") === "unlocked") {
             grantAccess();
         }
     }
 
-    function verifyLogin() {
-        let input = document.getElementById("gate-pass").value;
-        // Hash for "Admin@123"
-        if(securePass(input) === 'UVdSdGFXNUFNVEl6') {
+    async function verifyLogin() {
+        let input = document.getElementById("gate-pass").value.trim();
+        await loadGateConfig(); // Refresh PIN from server
+        
+        if(input === masterPin) {
             sessionStorage.setItem("gate_auth", "unlocked");
             grantAccess();
         } else {
@@ -154,48 +207,7 @@
     function grantAccess() {
         document.getElementById("login-overlay").style.display = "none";
         document.getElementById("main-app").style.display = "flex";
-        startFirebaseSystem();
     }
-
-    // --- 2. FIREBASE & CORE SYSTEM ---
-    let db;
-    let inputCode = "";
-    let globalStudentData = null; 
-
-    function startFirebaseSystem() {
-        const firebaseConfig = {
-          apiKey: "AIzaSyAA2P2IM5aPzJj10XMGLn_9BMSJhKeMGiE",
-          authDomain: "obc-mess-system.firebaseapp.com",
-          projectId: "obc-mess-system",
-          storageBucket: "obc-mess-system.firebasestorage.app",
-          messagingSenderId: "501219370424",
-          appId: "1:501219370424:web:1dddaefc10e8bd21efdb4d"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-    }
-
-    // 🔥 STRICT TIME SLOTS LOGIC
-    function getMealSession() {
-        const h = new Date().getHours();
-        if (h >= 7 && h < 10) return "Breakfast"; // 7:00 AM to 9:59 AM
-        if (h >= 13 && h < 16) return "Lunch";    // 1:00 PM to 3:59 PM
-        if (h >= 19 && h < 22) return "Dinner";   // 7:00 PM to 9:59 PM
-        return "Closed";
-    }
-
-    // Live Header Update
-    setInterval(() => {
-        const session = getMealSession();
-        const display = document.getElementById("session-display");
-        if(session === "Closed") {
-            display.innerHTML = "⛔ MESS CLOSED";
-            display.style.color = "#d9534f";
-        } else {
-            display.innerHTML = "✅ " + session.toUpperCase() + " SESSION ON";
-            display.style.color = "#5cb85c";
-        }
-    }, 1000);
 
     // Keypad Logic
     function press(n) {
@@ -216,8 +228,13 @@
         clearInput();
     }
 
+    function getDaysLeft(dateStr) {
+        let today = new Date(); today.setHours(0,0,0,0);
+        let target = new Date(dateStr);
+        return Math.ceil((target - target.getTimezoneOffset()*60000 - today) / (1000 * 60 * 60 * 24));
+    }
+
     async function checkStudent() {
-        // 🔥 TIME CHECK OVERRIDE
         const meal = getMealSession();
         if(meal === "Closed") {
             playAudio(false);
@@ -228,7 +245,6 @@
 
         if(!inputCode) return;
         const code = inputCode;
-        
         document.getElementById('display').innerText = "WAIT...";
 
         try {
@@ -241,11 +257,29 @@
                 return;
             }
 
-            const data = studentDoc.data();
+            let data = studentDoc.data();
             globalStudentData = data; 
             
             const todayStr = new Date().toISOString().split('T')[0];
             const logId = `${code}_${todayStr}_${meal}`;
+
+            // 🔥 AUTO-RESUME LOGIC (agar baccha pause tha aur gate pe aaya)
+            if(data.status === 'paused') {
+                let pDate = new Date(data.lastPauseDate), tDate = new Date(todayStr);
+                let daysPaused = Math.floor((tDate - pDate)/(1000*60*60*24));
+                if(daysPaused < 0) daysPaused = 0;
+                let newExp = new Date(data.feeValidTill); newExp.setDate(newExp.getDate() + daysPaused);
+                let hist = data.pauseHistory || []; hist.push({start: data.lastPauseDate, end: todayStr});
+
+                await db.collection("students").doc(code).update({ status: 'active', lastPauseDate: null, pauseHistory: hist, feeValidTill: newExp.toISOString().split('T')[0] });
+                data.status = 'active'; data.feeValidTill = newExp.toISOString().split('T')[0];
+            }
+
+            let daysLeft = getDaysLeft(data.feeValidTill);
+            if(daysLeft < 0 && data.status === 'active') {
+                await db.collection("students").doc(code).update({status: 'fee_due'});
+                data.status = 'fee_due';
+            }
 
             // Populate Popup Details
             document.getElementById('pop-photo').src = data.photo;
@@ -254,16 +288,16 @@
             document.getElementById('pop-fee').innerText = data.feeValidTill;
             document.getElementById('pop-session').innerText = `${meal.toUpperCase()} ENTRY`;
 
-            // Status Badge Logic
+            // Status Badge
             const statusBadge = document.getElementById('pop-status');
             if(data.status === 'active') { statusBadge.className = 'status-badge bg-active'; statusBadge.innerText = "ACTIVE"; }
             else if(data.status === 'fee_due') { statusBadge.className = 'status-badge bg-due'; statusBadge.innerText = "FEE DUE"; }
+            else if(data.status === 'paused') { statusBadge.className = 'status-badge bg-pause'; statusBadge.innerText = "PAUSED"; }
             else { statusBadge.className = 'status-badge bg-banned'; statusBadge.innerText = "BANNED"; }
 
             const actionArea = document.getElementById('popup-action-area');
             actionArea.innerHTML = "Checking...";
 
-            // Check if Already Eaten
             const logDoc = await db.collection("attendance").doc(logId).get();
 
             if(logDoc.exists) {
@@ -274,8 +308,14 @@
                 actionArea.innerHTML = `<div class="msg-already">⛔ BANNED BY ADMIN</div>`;
                 playAudio(false);
             }
+            else if(data.status === 'fee_due') {
+                actionArea.innerHTML = `
+                    <div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div>
+                    <button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`;
+                playAudio(false);
+            }
             else {
-                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}')">VERIFY & ALLOW</button>`;
+                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`;
                 playAudio(true, 400); 
             }
 
@@ -288,10 +328,9 @@
         }
     }
 
-    async function markEntry(logId, meal) {
-        const btn = document.querySelector('.btn-verify-now');
-        btn.innerText = "SAVING...";
-        btn.style.opacity = "0.7";
+    async function markEntry(logId, meal, isDueRecord) {
+        const actionArea = document.getElementById('popup-action-area');
+        actionArea.innerHTML = `<div class="msg-success">SAVING...</div>`;
 
         try {
             await db.collection("attendance").doc(logId).set({
@@ -300,18 +339,17 @@
                 room: globalStudentData.room,
                 meal: meal,
                 date: new Date().toISOString().split('T')[0],
+                isDue: isDueRecord,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            const actionArea = document.getElementById('popup-action-area');
-            actionArea.innerHTML = `<div class="msg-success">✅ VERIFIED! GO INSIDE</div>`;
+            actionArea.innerHTML = `<div class="msg-success">✅ ${isDueRecord ? 'ALLOWED ON DUE' : 'VERIFIED! GO INSIDE'}</div>`;
             playAudio(true, 800);
 
             setTimeout(() => { closePopup(); }, 1500);
 
         } catch(err) {
             alert("Failed to save entry!");
-            btn.innerText = "TRY AGAIN";
         }
     }
 
