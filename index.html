@@ -6,27 +6,27 @@
     <title>Mess Gate Entry</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: #121212; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
         
-        /* LOGIN SCREEN STYLES (Exact Match) */
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* OVERLAYS (Admin Login & PIN Login) */
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        
         .login-box { background: #1a1c1e; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; width: 90%; max-width: 350px; border: 1px solid #2a2d31; }
         .login-box h2 { color: #fff; margin: 0 0 10px 0; font-size: 24px; }
         .login-box p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
-        .login-box input { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #2a2d31; color: #fff; margin-bottom: 20px; font-size: 18px; text-align: center; outline: none; letter-spacing: 3px; }
+        .login-box input { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #2a2d31; color: #fff; margin-bottom: 20px; font-size: 18px; text-align: center; outline: none; letter-spacing: 2px; }
         .login-box input:focus { border: 2px solid #5cb85c; }
         .login-box button { width: 100%; background: #5cb85c; color: #fff; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(92, 184, 92, 0.3); }
         .login-box button:active { transform: scale(0.95); background: #449d44; }
 
-        /* MAIN APP */
+        /* MAIN APP KEYPAD */
         #main-app { width: 100%; display: none; justify-content: center; }
 
-        /* Main Keypad Card (Exact Original Look) */
         .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; }
-        
         .header { text-align: center; margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 600; color: #fff; }
         #session-display { margin: 5px 0 0 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
@@ -36,16 +36,11 @@
         .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         .btn { background: #32363b; color: #fff; font-size: 24px; font-weight: 500; padding: 18px; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
         .btn:active { background: #4a4f56; transform: scale(0.95); }
-        
-        .btn-clear { background: #d9534f; } 
-        .btn-clear:active { background: #c9302c; }
-        
-        .btn-enter { background: #5cb85c; } 
-        .btn-enter:active { background: #449d44; }
+        .btn-clear { background: #d9534f; } .btn-clear:active { background: #c9302c; }
+        .btn-enter { background: #5cb85c; } .btn-enter:active { background: #449d44; }
 
-        /* POPUP OVERLAY (Student Details) */
+        /* POPUP OVERLAY (Details) */
         #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-        
         .popup-box { width: 100%; max-width: 350px; background: #1e2227; border-radius: 20px; padding: 25px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.9); animation: popIn 0.3s ease-out; border: 1px solid #333; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
@@ -60,54 +55,49 @@
         .bg-pause { background: rgba(0, 122, 255, 0.2); color: #007AFF; border: 1px solid #007AFF; }
 
         #popup-action-area { margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
-        
         .btn-verify-now { width: 100%; background: #4caf50; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .btn-verify-due { width: 100%; background: transparent; color: #ff9800; border: 2px solid #ff9800; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 10px; }
-        
         .msg-already { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 2px dashed #f44336; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
         .msg-success { background: rgba(76, 175, 80, 0.1); color: #4caf50; border: 2px solid #4caf50; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
-        
         .close-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN (Exact Original Look) -->
-<div id="login-overlay">
+<!-- 1. ONE-TIME ADMIN DEVICE AUTHORIZATION -->
+<div id="firebase-login-overlay" class="overlay-screen">
     <div class="login-box">
-        <h2>Gate Security</h2>
-        <p>Enter Master Password</p>
-        <input type="password" id="gate-pass" placeholder="••••••••">
-        <button onclick="verifyLogin()">Unlock Terminal</button>
+        <h2>Device Setup</h2>
+        <p style="color:#ff9800;">Admin Auth required once for this device to connect to Database.</p>
+        <input type="email" id="admin-email" placeholder="Admin Email">
+        <input type="password" id="admin-pass" placeholder="Admin Password">
+        <button id="btn-auth" onclick="authorizeDevice()">Authorize Device</button>
     </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- 2. DAILY GATEKEEPER PIN SCREEN -->
+<div id="pin-login-overlay" class="overlay-screen">
+    <div class="login-box">
+        <h2>Gate Security</h2>
+        <p>Enter Master Gate PIN</p>
+        <input type="password" id="gate-pin" placeholder="••••••••" style="letter-spacing: 5px;">
+        <button id="btn-unlock" onclick="verifyPin()">Unlock Terminal</button>
+    </div>
+</div>
+
+<!-- 3. MAIN TERMINAL -->
 <div id="main-app">
     <div class="card">
         <div class="header">
             <h1>Mess Gate Entry</h1>
             <p id="session-display" style="color: #d9534f;">⏳ Checking Time...</p>
         </div>
-
         <div id="display">-</div>
-
         <div class="keypad">
-            <button class="btn" onclick="press(1)">1</button>
-            <button class="btn" onclick="press(2)">2</button>
-            <button class="btn" onclick="press(3)">3</button>
-            
-            <button class="btn" onclick="press(4)">4</button>
-            <button class="btn" onclick="press(5)">5</button>
-            <button class="btn" onclick="press(6)">6</button>
-            
-            <button class="btn" onclick="press(7)">7</button>
-            <button class="btn" onclick="press(8)">8</button>
-            <button class="btn" onclick="press(9)">9</button>
-            
-            <button class="btn btn-clear" onclick="clearInput()">C</button>
-            <button class="btn" onclick="press(0)">0</button>
-            <button class="btn btn-enter" onclick="checkStudent()">✔</button>
+            <button class="btn" onclick="press(1)">1</button><button class="btn" onclick="press(2)">2</button><button class="btn" onclick="press(3)">3</button>
+            <button class="btn" onclick="press(4)">4</button><button class="btn" onclick="press(5)">5</button><button class="btn" onclick="press(6)">6</button>
+            <button class="btn" onclick="press(7)">7</button><button class="btn" onclick="press(8)">8</button><button class="btn" onclick="press(9)">9</button>
+            <button class="btn btn-clear" onclick="clearInput()">C</button><button class="btn" onclick="press(0)">0</button><button class="btn btn-enter" onclick="checkStudent()">✔</button>
         </div>
     </div>
 </div>
@@ -116,15 +106,12 @@
 <div id="popup-overlay">
     <div class="popup-box">
         <button class="close-btn" onclick="closePopup()">✖</button>
-        
         <img id="pop-photo" class="popup-avatar" src="" alt="Photo">
         <h2 id="pop-name" class="popup-name">Loading...</h2>
         <p id="pop-room" class="popup-room">Room: - | Code: -</p>
-        
         <div id="pop-status" class="status-badge bg-active">Active</div>
         <div style="font-size:12px; color:#aaa; margin-bottom:5px;">Fee Valid Till: <b id="pop-fee" style="color:#fff;">-</b></div>
         <div style="font-size:12px; font-weight:bold; color:#2196f3;" id="pop-session">Session</div>
-
         <div id="popup-action-area"></div>
     </div>
 </div>
@@ -140,29 +127,82 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     let inputCode = "";
     let globalStudentData = null; 
-
-    // Dynamic Timings (Defaults if Firestore is loading)
     let messTimings = { bStart: 8, bEnd: 10, lStart: 13, lEnd: 15, dStart: 20, dEnd: 22 };
-    let masterPin = "Admin@123";
+    let liveMasterPin = "Admin@123";
 
-    // Fetch dynamic timings and PIN from Firestore on load
+    // --- SECURITY ROUTING ---
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            // Device is authenticated! Hide Firebase Login.
+            document.getElementById("firebase-login-overlay").style.display = "none";
+            
+            // Now we have permission to read DB safely
+            await loadGateConfig();
+            
+            // Check if PIN was already entered in this session
+            if(sessionStorage.getItem("gate_unlocked") === "true") {
+                document.getElementById("pin-login-overlay").style.display = "none";
+                document.getElementById("main-app").style.display = "flex";
+            } else {
+                // Ask for PIN
+                document.getElementById("pin-login-overlay").style.display = "flex";
+                document.getElementById("main-app").style.display = "none";
+            }
+        } else {
+            // New Device / Not Authenticated. Ask for Admin Email/Pass once.
+            document.getElementById("firebase-login-overlay").style.display = "flex";
+            document.getElementById("pin-login-overlay").style.display = "none";
+            document.getElementById("main-app").style.display = "none";
+        }
+    });
+
+    // 1. One Time Admin Auth
+    function authorizeDevice() {
+        let e = document.getElementById("admin-email").value;
+        let p = document.getElementById("admin-pass").value;
+        let btn = document.getElementById("btn-auth");
+        if(!e || !p) return alert("Please enter details.");
+        
+        btn.innerText = "Authorizing...";
+        auth.signInWithEmailAndPassword(e, p).then(() => {
+            // Success! The onAuthStateChanged listener handles the rest
+        }).catch(err => {
+            alert("❌ Auth Failed: " + err.message);
+            btn.innerText = "Authorize Device";
+        });
+    }
+
+    // 2. Load settings from DB
     async function loadGateConfig() {
         try {
             const tDoc = await db.collection("config").doc("timings").get();
             if(tDoc.exists) messTimings = tDoc.data();
 
             const pDoc = await db.collection("config").doc("gate_security").get();
-            if(pDoc.exists && pDoc.data().pin) masterPin = pDoc.data().pin;
+            if(pDoc.exists && pDoc.data().pin) liveMasterPin = pDoc.data().pin;
         } catch(e) {
-            console.log("Using default config");
+            console.error("Config load error:", e);
         }
     }
-    loadGateConfig();
 
-    // Session Logic using dynamic Firestore timings
+    // 3. Gatekeeper PIN Verification
+    function verifyPin() {
+        let input = document.getElementById("gate-pin").value.trim();
+        if(input === liveMasterPin) {
+            sessionStorage.setItem("gate_unlocked", "true");
+            document.getElementById("pin-login-overlay").style.display = "none";
+            document.getElementById("main-app").style.display = "flex";
+        } else {
+            alert("❌ Incorrect PIN!");
+            document.getElementById("gate-pin").value = "";
+        }
+    }
+
+    // Session Logic
     function getMealSession() {
         const h = new Date().getHours();
         if (h >= messTimings.bStart && h < messTimings.bEnd) return "Breakfast";
@@ -171,62 +211,17 @@
         return "Closed";
     }
 
-    // Live Header Update
     setInterval(() => {
         const session = getMealSession();
         const display = document.getElementById("session-display");
-        if(session === "Closed") {
-            display.innerText = "⛔ MESS CLOSED";
-            display.style.color = "#d9534f";
-        } else {
-            display.innerText = "✅ " + session.toUpperCase() + " SESSION ON";
-            display.style.color = "#5cb85c";
-        }
+        if(session === "Closed") { display.innerText = "⛔ MESS CLOSED"; display.style.color = "#d9534f"; } 
+        else { display.innerText = "✅ " + session.toUpperCase() + " SESSION ON"; display.style.color = "#5cb85c"; }
     }, 1000);
 
-    // --- SECURITY LOGIN ---
-    window.onload = () => {
-        if(sessionStorage.getItem("gate_auth") === "unlocked") {
-            grantAccess();
-        }
-    }
-
-    async function verifyLogin() {
-        let input = document.getElementById("gate-pass").value.trim();
-        await loadGateConfig(); // Refresh PIN from server
-        
-        if(input === masterPin) {
-            sessionStorage.setItem("gate_auth", "unlocked");
-            grantAccess();
-        } else {
-            alert("❌ Incorrect Password!");
-            document.getElementById("gate-pass").value = "";
-        }
-    }
-
-    function grantAccess() {
-        document.getElementById("login-overlay").style.display = "none";
-        document.getElementById("main-app").style.display = "flex";
-    }
-
     // Keypad Logic
-    function press(n) {
-        if(inputCode.length < 5) { 
-            if(inputCode === "") document.getElementById('display').innerText = "";
-            inputCode += n;
-            document.getElementById('display').innerText = inputCode;
-        }
-    }
-
-    function clearInput() {
-        inputCode = "";
-        document.getElementById('display').innerText = "-";
-    }
-    
-    function closePopup() {
-        document.getElementById('popup-overlay').style.display = "none";
-        clearInput();
-    }
+    function press(n) { if(inputCode.length < 5) { if(inputCode === "") document.getElementById('display').innerText = ""; inputCode += n; document.getElementById('display').innerText = inputCode; } }
+    function clearInput() { inputCode = ""; document.getElementById('display').innerText = "-"; }
+    function closePopup() { document.getElementById('popup-overlay').style.display = "none"; clearInput(); }
 
     function getDaysLeft(dateStr) {
         let today = new Date(); today.setHours(0,0,0,0);
@@ -234,36 +229,25 @@
         return Math.ceil((target - target.getTimezoneOffset()*60000 - today) / (1000 * 60 * 60 * 24));
     }
 
+    // Terminal Checking
     async function checkStudent() {
         const meal = getMealSession();
-        if(meal === "Closed") {
-            playAudio(false);
-            alert("⛔ MESS IS CURRENTLY CLOSED!");
-            clearInput();
-            return;
-        }
-
+        if(meal === "Closed") { playAudio(false); alert("⛔ MESS IS CURRENTLY CLOSED!"); clearInput(); return; }
         if(!inputCode) return;
+        
         const code = inputCode;
         document.getElementById('display').innerText = "WAIT...";
 
         try {
             const studentDoc = await db.collection("students").doc(code).get();
 
-            if(!studentDoc.exists) {
-                playAudio(false);
-                alert("❌ INVALID CODE! Student not found.");
-                clearInput();
-                return;
-            }
+            if(!studentDoc.exists) { playAudio(false); alert("❌ INVALID CODE! Student not found."); clearInput(); return; }
 
             let data = studentDoc.data();
             globalStudentData = data; 
-            
             const todayStr = new Date().toISOString().split('T')[0];
             const logId = `${code}_${todayStr}_${meal}`;
 
-            // 🔥 AUTO-RESUME LOGIC (agar baccha pause tha aur gate pe aaya)
             if(data.status === 'paused') {
                 let pDate = new Date(data.lastPauseDate), tDate = new Date(todayStr);
                 let daysPaused = Math.floor((tDate - pDate)/(1000*60*60*24));
@@ -281,87 +265,47 @@
                 data.status = 'fee_due';
             }
 
-            // Populate Popup Details
-            document.getElementById('pop-photo').src = data.photo;
-            document.getElementById('pop-name').innerText = data.name;
+            document.getElementById('pop-photo').src = data.photo; document.getElementById('pop-name').innerText = data.name;
             document.getElementById('pop-room').innerText = `Room: ${data.room} | Code: ${data.code}`;
-            document.getElementById('pop-fee').innerText = data.feeValidTill;
-            document.getElementById('pop-session').innerText = `${meal.toUpperCase()} ENTRY`;
+            document.getElementById('pop-fee').innerText = data.feeValidTill; document.getElementById('pop-session').innerText = `${meal.toUpperCase()} ENTRY`;
 
-            // Status Badge
             const statusBadge = document.getElementById('pop-status');
             if(data.status === 'active') { statusBadge.className = 'status-badge bg-active'; statusBadge.innerText = "ACTIVE"; }
             else if(data.status === 'fee_due') { statusBadge.className = 'status-badge bg-due'; statusBadge.innerText = "FEE DUE"; }
             else if(data.status === 'paused') { statusBadge.className = 'status-badge bg-pause'; statusBadge.innerText = "PAUSED"; }
             else { statusBadge.className = 'status-badge bg-banned'; statusBadge.innerText = "BANNED"; }
 
-            const actionArea = document.getElementById('popup-action-area');
-            actionArea.innerHTML = "Checking...";
-
+            const actionArea = document.getElementById('popup-action-area'); actionArea.innerHTML = "Checking...";
             const logDoc = await db.collection("attendance").doc(logId).get();
 
-            if(logDoc.exists) {
-                actionArea.innerHTML = `<div class="msg-already">❌ ALREADY EATEN!</div>`;
-                playAudio(false);
-            } 
-            else if(data.status === 'banned') {
-                actionArea.innerHTML = `<div class="msg-already">⛔ BANNED BY ADMIN</div>`;
-                playAudio(false);
-            }
-            else if(data.status === 'fee_due') {
-                actionArea.innerHTML = `
-                    <div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div>
-                    <button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`;
-                playAudio(false);
-            }
-            else {
-                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`;
-                playAudio(true, 400); 
-            }
+            if(logDoc.exists) { actionArea.innerHTML = `<div class="msg-already">❌ ALREADY EATEN!</div>`; playAudio(false); } 
+            else if(data.status === 'banned') { actionArea.innerHTML = `<div class="msg-already">⛔ BANNED BY ADMIN</div>`; playAudio(false); }
+            else if(data.status === 'fee_due') { actionArea.innerHTML = `<div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div><button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`; playAudio(false); }
+            else { actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`; playAudio(true, 400); }
 
             document.getElementById('popup-overlay').style.display = "flex";
 
         } catch (err) {
             console.error(err);
-            alert("Database Error! Check internet connection.");
+            alert("Database Error! Check connection.");
             clearInput();
         }
     }
 
     async function markEntry(logId, meal, isDueRecord) {
-        const actionArea = document.getElementById('popup-action-area');
-        actionArea.innerHTML = `<div class="msg-success">SAVING...</div>`;
-
+        const actionArea = document.getElementById('popup-action-area'); actionArea.innerHTML = `<div class="msg-success">SAVING...</div>`;
         try {
-            await db.collection("attendance").doc(logId).set({
-                code: globalStudentData.code,
-                name: globalStudentData.name,
-                room: globalStudentData.room,
-                meal: meal,
-                date: new Date().toISOString().split('T')[0],
-                isDue: isDueRecord,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
+            await db.collection("attendance").doc(logId).set({ code: globalStudentData.code, name: globalStudentData.name, room: globalStudentData.room, meal: meal, date: new Date().toISOString().split('T')[0], isDue: isDueRecord, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             actionArea.innerHTML = `<div class="msg-success">✅ ${isDueRecord ? 'ALLOWED ON DUE' : 'VERIFIED! GO INSIDE'}</div>`;
-            playAudio(true, 800);
-
-            setTimeout(() => { closePopup(); }, 1500);
-
-        } catch(err) {
-            alert("Failed to save entry!");
-        }
+            playAudio(true, 800); setTimeout(() => { closePopup(); }, 1500);
+        } catch(err) { alert("Failed to save entry!"); }
     }
 
     function playAudio(isSuccess, freq = 800) {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = isSuccess ? "sine" : "square";
-        osc.frequency.value = isSuccess ? freq : 150;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = isSuccess ? "sine" : "square"; osc.frequency.value = isSuccess ? freq : 150;
+        osc.connect(gain); gain.connect(ctx.destination); osc.start();
         setTimeout(() => osc.stop(), isSuccess ? 200 : 500);
     }
 </script>
