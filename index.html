@@ -244,7 +244,7 @@
                         isScanningActive = false;
                     }
 
-                    checkStudent(inputCode);
+                    checkStudent(inputCode, true); // true = came from QR scan
                 }
             },
             (errorMessage) => {
@@ -328,7 +328,7 @@
     }
 
     // Terminal Checking & Verification
-    async function checkStudent(codeToVerify) {
+    async function checkStudent(codeToVerify, fromScan = false) {
         const meal = getMealSession();
         if(meal === "Closed") { 
             playAudio(false); 
@@ -404,11 +404,16 @@
                 actionArea.innerHTML = `<div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div><button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`; 
                 playAudio(false); 
             }
-            else { 
-                // 🔥 AUTO-VERIFY: student is active & hasn't eaten yet — mark entry immediately, no tap needed
+            else if (fromScan) { 
+                // 🔥 AUTO-VERIFY: only for QR scans — student is active & hasn't eaten, mark entry immediately, no tap needed
                 actionArea.innerHTML = `<div class="msg-success">⏳ VERIFYING...</div>`; 
                 playAudio(true, 400); 
                 markEntry(logId, meal, false);
+            }
+            else {
+                // Manual keypad entry — still requires the staff to tap Verify & Allow
+                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`; 
+                playAudio(true, 400); 
             }
 
         } catch (err) {
