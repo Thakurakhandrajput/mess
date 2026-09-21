@@ -15,7 +15,8 @@
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: #121212; color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
+        html, body { height: 100%; }
+        body { background: #121212; color: #fff; margin: 0; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow: hidden; height: 100dvh; }
         
         /* OVERLAYS (Admin Login & PIN Login) */
         .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -29,21 +30,30 @@
         .login-box button:active { transform: scale(0.95); background: #449d44; }
 
         /* MAIN APP CONTAINER */
-        #main-app { width: 100%; display: none; flex-direction: column; align-items: center; }
+        #main-app { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; overflow: hidden; }
 
-        .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 20px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; margin-bottom: 20px;}
-        .header { text-align: center; margin-bottom: 15px; }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 600; color: #fff; }
-        #session-display { margin: 3px 0 0 0; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .card { width: 100%; max-width: 360px; height: 100%; display: flex; flex-direction: column; background: #1a1c1e; border-radius: 20px; padding: 12px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; overflow: hidden; }
+        .header { text-align: center; margin-bottom: 8px; flex: 0 0 auto; }
+        .header h1 { margin: 0; font-size: 17px; font-weight: 600; color: #fff; }
+        #session-display { margin: 3px 0 0 0; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* 🔥 LIVE SCANNER BOX (Aapke banaye huye area ke liye) 🔥 */
-        #reader { width: 100%; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid #32363b; margin-bottom: 15px; }
-        #reader video { width: 100% !important; border-radius: 12px; object-fit: cover; }
+        /* 🔥 LIVE SCANNER BOX — capped height so it never pushes the keypad off-screen 🔥 */
+        #reader-wrap { position: relative; flex: 0 0 auto; width: 100%; height: 34vh; max-height: 190px; min-height: 130px; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid #32363b; margin-bottom: 10px; }
+        #reader { width: 100%; height: 100%; }
+        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 0 !important; }
+        #reader img { display: none !important; } /* hide default html5-qrcode camera-permission image */
 
-        #display { font-size: 26px; background: #2a2d31; color: #fff; padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 15px; letter-spacing: 4px; font-weight: bold; height: 50px; display: flex; align-items: center; justify-content: center; }
+        #reader-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background: #000; color: #777; font-size: 13px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; gap: 6px; }
+        #reader-placeholder .icon { font-size: 28px; }
+
+        #scanner-toggle-btn { position: absolute; top: 8px; right: 8px; z-index: 20; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        #scanner-toggle-btn.is-off { background: rgba(92,184,92,0.85); border-color: #5cb85c; }
+        #scanner-toggle-btn.is-on { background: rgba(217,83,79,0.85); border-color: #d9534f; }
+
+        #display { flex: 0 0 auto; font-size: 22px; background: #2a2d31; color: #fff; padding: 8px; border-radius: 12px; text-align: center; margin-bottom: 10px; letter-spacing: 4px; font-weight: bold; height: 42px; display: flex; align-items: center; justify-content: center; }
         
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .btn { background: #32363b; color: #fff; font-size: 20px; font-weight: 500; padding: 14px; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
+        .keypad { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); gap: 8px; min-height: 0; }
+        .btn { background: #32363b; color: #fff; font-size: clamp(18px, 6vh, 26px); font-weight: 500; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
         .btn:active { background: #4a4f56; transform: scale(0.95); }
         .btn-clear { background: #d9534f; } .btn-clear:active { background: #c9302c; }
         .btn-enter { background: #5cb85c; } .btn-enter:active { background: #449d44; }
@@ -103,7 +113,11 @@
         </div>
         
         <!-- 🔥 QR SCANNER VIEWPORT 🔥 -->
-        <div id="reader"></div>
+        <div id="reader-wrap">
+            <div id="reader"></div>
+            <div id="reader-placeholder"><div class="icon">📷</div><div>Camera Off</div></div>
+            <button id="scanner-toggle-btn" class="is-on" onclick="toggleScanner()">⏸ Stop Cam</button>
+        </div>
 
         <div id="display">-</div>
         
@@ -149,6 +163,7 @@
     let liveMasterPin = "Admin@123";
     let html5QrCode = null;
     let isScanningActive = false;
+    let isCameraStarted = false; // true once the camera stream itself is running (vs just paused)
 
     // --- SECURITY ROUTING ---
     auth.onAuthStateChanged(async (user) => {
@@ -208,10 +223,10 @@
 
     // --- 🔥 QR CAMERA SCANNER INITIALIZATION 🔥 ---
     function startScanner() {
-        if (isScanningActive) return;
-        
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 15, qrbox: { width: 220, height: 220 } };
+        if (isCameraStarted) return;
+
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 190, height: 190 } };
 
         html5QrCode.start(
             { facingMode: "environment" }, 
@@ -237,16 +252,43 @@
             }
         ).then(() => {
             isScanningActive = true;
+            isCameraStarted = true;
+            setToggleButtonState(true);
         }).catch(err => {
             console.error("Camera start failed:", err);
         });
     }
 
-    function stopScanner() {
-        if (html5QrCode && isScanningActive) {
+    // Fully releases the camera stream (removes the OS "camera in use" indicator too)
+    function stopScannerFully() {
+        if (html5QrCode && isCameraStarted) {
             html5QrCode.stop().then(() => {
                 isScanningActive = false;
+                isCameraStarted = false;
+                setToggleButtonState(false);
             }).catch(err => console.error("Stop failed", err));
+        }
+    }
+
+    function toggleScanner() {
+        if (isCameraStarted) {
+            stopScannerFully();
+        } else {
+            startScanner();
+        }
+    }
+
+    function setToggleButtonState(isOn) {
+        const btn = document.getElementById('scanner-toggle-btn');
+        const placeholder = document.getElementById('reader-placeholder');
+        if (isOn) {
+            btn.innerText = "⏸ Stop Cam";
+            btn.classList.remove('is-off'); btn.classList.add('is-on');
+            placeholder.style.display = 'none';
+        } else {
+            btn.innerText = "▶ Start Cam";
+            btn.classList.remove('is-on'); btn.classList.add('is-off');
+            placeholder.style.display = 'flex';
         }
     }
 
@@ -272,8 +314,8 @@
     function closePopup() { 
         document.getElementById('popup-overlay').style.display = "none"; 
         clearInput(); 
-        // Resume camera scanner when popup closes
-        if (html5QrCode && !isScanningActive) {
+        // Resume camera scanner when popup closes (only if the camera is meant to be on)
+        if (html5QrCode && isCameraStarted && !isScanningActive) {
             html5QrCode.resume();
             isScanningActive = true;
         }
@@ -345,6 +387,7 @@
 
             const actionArea = document.getElementById('popup-action-area'); 
             actionArea.innerHTML = "Checking log...";
+            document.getElementById('popup-overlay').style.display = "flex";
             
             const logDoc = await db.collection("attendance").doc(logId).get();
 
@@ -357,15 +400,16 @@
                 playAudio(false); 
             }
             else if(data.status === 'fee_due') { 
+                // Fee-due is a judgment call for the gate staff, so this still needs a tap
                 actionArea.innerHTML = `<div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div><button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`; 
                 playAudio(false); 
             }
             else { 
-                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`; 
+                // 🔥 AUTO-VERIFY: student is active & hasn't eaten yet — mark entry immediately, no tap needed
+                actionArea.innerHTML = `<div class="msg-success">⏳ VERIFYING...</div>`; 
                 playAudio(true, 400); 
+                markEntry(logId, meal, false);
             }
-
-            document.getElementById('popup-overlay').style.display = "flex";
 
         } catch (err) {
             console.error(err);
