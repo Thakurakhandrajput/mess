@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mess Gate Entry</title>
+    <title>Mess Gate Entry & Scanner</title>
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <!-- 🔥 HTML5 QR CODE SCANNER SDK 🔥 -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: #121212; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        body { background: #121212; color: #fff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
         
         /* OVERLAYS (Admin Login & PIN Login) */
         .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -23,25 +28,29 @@
         .login-box button { width: 100%; background: #5cb85c; color: #fff; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(92, 184, 92, 0.3); }
         .login-box button:active { transform: scale(0.95); background: #449d44; }
 
-        /* MAIN APP KEYPAD */
-        #main-app { width: 100%; display: none; justify-content: center; }
+        /* MAIN APP CONTAINER */
+        #main-app { width: 100%; display: none; flex-direction: column; align-items: center; }
 
-        .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; }
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; color: #fff; }
-        #session-display { margin: 5px 0 0 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .card { width: 100%; max-width: 360px; background: #1a1c1e; border-radius: 20px; padding: 20px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #2a2d31; margin-bottom: 20px;}
+        .header { text-align: center; margin-bottom: 15px; }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 600; color: #fff; }
+        #session-display { margin: 3px 0 0 0; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         
-        #display { font-size: 32px; background: #2a2d31; color: #fff; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 25px; letter-spacing: 5px; font-weight: bold; height: 65px; display: flex; align-items: center; justify-content: center; }
+        /* 🔥 LIVE SCANNER BOX (Aapke banaye huye area ke liye) 🔥 */
+        #reader { width: 100%; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid #32363b; margin-bottom: 15px; }
+        #reader video { width: 100% !important; border-radius: 12px; object-fit: cover; }
+
+        #display { font-size: 26px; background: #2a2d31; color: #fff; padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 15px; letter-spacing: 4px; font-weight: bold; height: 50px; display: flex; align-items: center; justify-content: center; }
         
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .btn { background: #32363b; color: #fff; font-size: 24px; font-weight: 500; padding: 18px; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn { background: #32363b; color: #fff; font-size: 20px; font-weight: 500; padding: 14px; border: none; border-radius: 12px; cursor: pointer; transition: 0.1s; }
         .btn:active { background: #4a4f56; transform: scale(0.95); }
         .btn-clear { background: #d9534f; } .btn-clear:active { background: #c9302c; }
         .btn-enter { background: #5cb85c; } .btn-enter:active { background: #449d44; }
 
         /* POPUP OVERLAY (Details) */
-        #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-        .popup-box { width: 100%; max-width: 350px; background: #1e2227; border-radius: 20px; padding: 25px; text-align: center; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.9); animation: popIn 0.3s ease-out; border: 1px solid #333; }
+        #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .popup-box { width: 100%; max-width: 350px; background: #1e2227; border-radius: 24px; padding: 25px; text-align: center; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.9); animation: popIn 0.3s ease-out; border: 1px solid #333; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
         .popup-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; margin-bottom: 15px; background: #333; }
@@ -51,31 +60,31 @@
         .status-badge { display: inline-block; padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; }
         .bg-active { background: rgba(76, 175, 80, 0.2); color: #4caf50; border: 1px solid #4caf50; }
         .bg-due { background: rgba(255, 152, 0, 0.2); color: #ff9800; border: 1px solid #ff9800; }
-        .bg-banned { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+        .bg-banned { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f4f6f9; }
         .bg-pause { background: rgba(0, 122, 255, 0.2); color: #007AFF; border: 1px solid #007AFF; }
 
         #popup-action-area { margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
         .btn-verify-now { width: 100%; background: #4caf50; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .btn-verify-due { width: 100%; background: transparent; color: #ff9800; border: 2px solid #ff9800; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 10px; }
-        .msg-already { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 2px dashed #f44336; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+        .msg-already { background: rgba(244, 67, 54, 0.1); color: #f4f6f9; border: 2px dashed #f4f6f9; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
         .msg-success { background: rgba(76, 175, 80, 0.1); color: #4caf50; border: 2px solid #4caf50; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; letter-spacing: 1px; }
         .close-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<!-- 1. ONE-TIME ADMIN DEVICE AUTHORIZATION -->
+<!-- 1. ADMIN AUTH OVERLAY -->
 <div id="firebase-login-overlay" class="overlay-screen">
     <div class="login-box">
         <h2>Device Setup</h2>
-        <p style="color:#ff9800;">Admin Auth required once for this device to connect to Database.</p>
+        <p style="color:#ff9800;">Admin Auth required once for this terminal.</p>
         <input type="email" id="admin-email" placeholder="Admin Email">
         <input type="password" id="admin-pass" placeholder="Admin Password">
         <button id="btn-auth" onclick="authorizeDevice()">Authorize Device</button>
     </div>
 </div>
 
-<!-- 2. DAILY GATEKEEPER PIN SCREEN -->
+<!-- 2. GATE PIN OVERLAY -->
 <div id="pin-login-overlay" class="overlay-screen">
     <div class="login-box">
         <h2>Gate Security</h2>
@@ -92,12 +101,17 @@
             <h1>Mess Gate Entry</h1>
             <p id="session-display" style="color: #d9534f;">⏳ Checking Time...</p>
         </div>
+        
+        <!-- 🔥 QR SCANNER VIEWPORT 🔥 -->
+        <div id="reader"></div>
+
         <div id="display">-</div>
+        
         <div class="keypad">
             <button class="btn" onclick="press(1)">1</button><button class="btn" onclick="press(2)">2</button><button class="btn" onclick="press(3)">3</button>
             <button class="btn" onclick="press(4)">4</button><button class="btn" onclick="press(5)">5</button><button class="btn" onclick="press(6)">6</button>
             <button class="btn" onclick="press(7)">7</button><button class="btn" onclick="press(8)">8</button><button class="btn" onclick="press(9)">9</button>
-            <button class="btn btn-clear" onclick="clearInput()">C</button><button class="btn" onclick="press(0)">0</button><button class="btn btn-enter" onclick="checkStudent()">✔</button>
+            <button class="btn btn-clear" onclick="clearInput()">C</button><button class="btn" onclick="press(0)">0</button><button class="btn btn-enter" onclick="checkStudent(inputCode)">✔</button>
         </div>
     </div>
 </div>
@@ -133,34 +147,30 @@
     let globalStudentData = null; 
     let messTimings = { bStart: 8, bEnd: 10, lStart: 13, lEnd: 15, dStart: 20, dEnd: 22 };
     let liveMasterPin = "Admin@123";
+    let html5QrCode = null;
+    let isScanningActive = false;
 
     // --- SECURITY ROUTING ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            // Device is authenticated! Hide Firebase Login.
             document.getElementById("firebase-login-overlay").style.display = "none";
-            
-            // Now we have permission to read DB safely
             await loadGateConfig();
             
-            // Check if PIN was already entered in this session
             if(sessionStorage.getItem("gate_unlocked") === "true") {
                 document.getElementById("pin-login-overlay").style.display = "none";
                 document.getElementById("main-app").style.display = "flex";
+                startScanner(); // 🔥 Start camera scanner
             } else {
-                // Ask for PIN
                 document.getElementById("pin-login-overlay").style.display = "flex";
                 document.getElementById("main-app").style.display = "none";
             }
         } else {
-            // New Device / Not Authenticated. Ask for Admin Email/Pass once.
             document.getElementById("firebase-login-overlay").style.display = "flex";
             document.getElementById("pin-login-overlay").style.display = "none";
             document.getElementById("main-app").style.display = "none";
         }
     });
 
-    // 1. One Time Admin Auth
     function authorizeDevice() {
         let e = document.getElementById("admin-email").value;
         let p = document.getElementById("admin-pass").value;
@@ -168,41 +178,78 @@
         if(!e || !p) return alert("Please enter details.");
         
         btn.innerText = "Authorizing...";
-        auth.signInWithEmailAndPassword(e, p).then(() => {
-            // Success! The onAuthStateChanged listener handles the rest
-        }).catch(err => {
+        auth.signInWithEmailAndPassword(e, p).catch(err => {
             alert("❌ Auth Failed: " + err.message);
             btn.innerText = "Authorize Device";
         });
     }
 
-    // 2. Load settings from DB
     async function loadGateConfig() {
         try {
             const tDoc = await db.collection("config").doc("timings").get();
             if(tDoc.exists) messTimings = tDoc.data();
-
             const pDoc = await db.collection("config").doc("gate_security").get();
             if(pDoc.exists && pDoc.data().pin) liveMasterPin = pDoc.data().pin;
-        } catch(e) {
-            console.error("Config load error:", e);
-        }
+        } catch(e) { console.error("Config load error:", e); }
     }
 
-    // 3. Gatekeeper PIN Verification
     function verifyPin() {
         let input = document.getElementById("gate-pin").value.trim();
         if(input === liveMasterPin) {
             sessionStorage.setItem("gate_unlocked", "true");
             document.getElementById("pin-login-overlay").style.display = "none";
             document.getElementById("main-app").style.display = "flex";
+            startScanner(); // 🔥 Start camera scanner after PIN unlock
         } else {
             alert("❌ Incorrect PIN!");
             document.getElementById("gate-pin").value = "";
         }
     }
 
-    // Session Logic
+    // --- 🔥 QR CAMERA SCANNER INITIALIZATION 🔥 ---
+    function startScanner() {
+        if (isScanningActive) return;
+        
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 220, height: 220 } };
+
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            (decodedText) => {
+                // Successfully scanned QR Code text (ye bacche ka code hoga jaise "101")
+                let scannedCode = decodedText.trim();
+                if(scannedCode && scannedCode.length <= 6) {
+                    inputCode = scannedCode;
+                    document.getElementById('display').innerText = inputCode;
+                    
+                    // Pauses scanner temporarily to avoid duplicate triggers
+                    if(isScanningActive) {
+                        html5QrCode.pause();
+                        isScanningActive = false;
+                    }
+
+                    checkStudent(inputCode);
+                }
+            },
+            (errorMessage) => {
+                // Scanning frame by frame (ignore errors)
+            }
+        ).then(() => {
+            isScanningActive = true;
+        }).catch(err => {
+            console.error("Camera start failed:", err);
+        });
+    }
+
+    function stopScanner() {
+        if (html5QrCode && isScanningActive) {
+            html5QrCode.stop().then(() => {
+                isScanningActive = false;
+            }).catch(err => console.error("Stop failed", err));
+        }
+    }
+
     function getMealSession() {
         const h = new Date().getHours();
         if (h >= messTimings.bStart && h < messTimings.bEnd) return "Breakfast";
@@ -221,7 +268,16 @@
     // Keypad Logic
     function press(n) { if(inputCode.length < 5) { if(inputCode === "") document.getElementById('display').innerText = ""; inputCode += n; document.getElementById('display').innerText = inputCode; } }
     function clearInput() { inputCode = ""; document.getElementById('display').innerText = "-"; }
-    function closePopup() { document.getElementById('popup-overlay').style.display = "none"; clearInput(); }
+    
+    function closePopup() { 
+        document.getElementById('popup-overlay').style.display = "none"; 
+        clearInput(); 
+        // Resume camera scanner when popup closes
+        if (html5QrCode && !isScanningActive) {
+            html5QrCode.resume();
+            isScanningActive = true;
+        }
+    }
 
     function getDaysLeft(dateStr) {
         let today = new Date(); today.setHours(0,0,0,0);
@@ -229,19 +285,29 @@
         return Math.ceil((target - target.getTimezoneOffset()*60000 - today) / (1000 * 60 * 60 * 24));
     }
 
-    // Terminal Checking
-    async function checkStudent() {
+    // Terminal Checking & Verification
+    async function checkStudent(codeToVerify) {
         const meal = getMealSession();
-        if(meal === "Closed") { playAudio(false); alert("⛔ MESS IS CURRENTLY CLOSED!"); clearInput(); return; }
-        if(!inputCode) return;
+        if(meal === "Closed") { 
+            playAudio(false); 
+            alert("⛔ MESS IS CURRENTLY CLOSED!"); 
+            closePopup();
+            return; 
+        }
+        if(!codeToVerify) return;
         
-        const code = inputCode;
-        document.getElementById('display').innerText = "WAIT...";
+        const code = codeToVerify;
+        document.getElementById('display').innerText = "CHECK...";
 
         try {
             const studentDoc = await db.collection("students").doc(code).get();
 
-            if(!studentDoc.exists) { playAudio(false); alert("❌ INVALID CODE! Student not found."); clearInput(); return; }
+            if(!studentDoc.exists) { 
+                playAudio(false); 
+                alert(`❌ INVALID CODE (${code})! Student not found.`); 
+                closePopup();
+                return; 
+            }
 
             let data = studentDoc.data();
             globalStudentData = data; 
@@ -265,9 +331,11 @@
                 data.status = 'fee_due';
             }
 
-            document.getElementById('pop-photo').src = data.photo; document.getElementById('pop-name').innerText = data.name;
+            document.getElementById('pop-photo').src = data.photo; 
+            document.getElementById('pop-name').innerText = data.name;
             document.getElementById('pop-room').innerText = `Room: ${data.room} | Code: ${data.code}`;
-            document.getElementById('pop-fee').innerText = data.feeValidTill; document.getElementById('pop-session').innerText = `${meal.toUpperCase()} ENTRY`;
+            document.getElementById('pop-fee').innerText = data.feeValidTill; 
+            document.getElementById('pop-session').innerText = `${meal.toUpperCase()} ENTRY`;
 
             const statusBadge = document.getElementById('pop-status');
             if(data.status === 'active') { statusBadge.className = 'status-badge bg-active'; statusBadge.innerText = "ACTIVE"; }
@@ -275,38 +343,71 @@
             else if(data.status === 'paused') { statusBadge.className = 'status-badge bg-pause'; statusBadge.innerText = "PAUSED"; }
             else { statusBadge.className = 'status-badge bg-banned'; statusBadge.innerText = "BANNED"; }
 
-            const actionArea = document.getElementById('popup-action-area'); actionArea.innerHTML = "Checking...";
+            const actionArea = document.getElementById('popup-action-area'); 
+            actionArea.innerHTML = "Checking log...";
+            
             const logDoc = await db.collection("attendance").doc(logId).get();
 
-            if(logDoc.exists) { actionArea.innerHTML = `<div class="msg-already">❌ ALREADY EATEN!</div>`; playAudio(false); } 
-            else if(data.status === 'banned') { actionArea.innerHTML = `<div class="msg-already">⛔ BANNED BY ADMIN</div>`; playAudio(false); }
-            else if(data.status === 'fee_due') { actionArea.innerHTML = `<div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div><button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`; playAudio(false); }
-            else { actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`; playAudio(true, 400); }
+            if(logDoc.exists) { 
+                actionArea.innerHTML = `<div class="msg-already">❌ ALREADY EATEN!</div>`; 
+                playAudio(false); 
+            } 
+            else if(data.status === 'banned') { 
+                actionArea.innerHTML = `<div class="msg-already">⛔ BANNED BY ADMIN</div>`; 
+                playAudio(false); 
+            }
+            else if(data.status === 'fee_due') { 
+                actionArea.innerHTML = `<div style="color:#ff9800; font-weight:bold; margin-bottom:10px;">⚠️ FEE EXPIRED!</div><button class="btn-verify-due" onclick="markEntry('${logId}', '${meal}', true)">ALLOW ANYWAY (DUE)</button>`; 
+                playAudio(false); 
+            }
+            else { 
+                actionArea.innerHTML = `<button class="btn-verify-now" onclick="markEntry('${logId}', '${meal}', false)">VERIFY & ALLOW</button>`; 
+                playAudio(true, 400); 
+            }
 
             document.getElementById('popup-overlay').style.display = "flex";
 
         } catch (err) {
             console.error(err);
             alert("Database Error! Check connection.");
-            clearInput();
+            closePopup();
         }
     }
 
     async function markEntry(logId, meal, isDueRecord) {
-        const actionArea = document.getElementById('popup-action-area'); actionArea.innerHTML = `<div class="msg-success">SAVING...</div>`;
+        const actionArea = document.getElementById('popup-action-area'); 
+        actionArea.innerHTML = `<div class="msg-success">SAVING...</div>`;
         try {
-            await db.collection("attendance").doc(logId).set({ code: globalStudentData.code, name: globalStudentData.name, room: globalStudentData.room, meal: meal, date: new Date().toISOString().split('T')[0], isDue: isDueRecord, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection("attendance").doc(logId).set({ 
+                code: globalStudentData.code, 
+                name: globalStudentData.name, 
+                room: globalStudentData.room, 
+                meal: meal, 
+                date: new Date().toISOString().split('T')[0], 
+                isDue: isDueRecord, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+            
             actionArea.innerHTML = `<div class="msg-success">✅ ${isDueRecord ? 'ALLOWED ON DUE' : 'VERIFIED! GO INSIDE'}</div>`;
-            playAudio(true, 800); setTimeout(() => { closePopup(); }, 1500);
-        } catch(err) { alert("Failed to save entry!"); }
+            playAudio(true, 800); 
+            
+            setTimeout(() => { 
+                closePopup(); 
+            }, 1200);
+            
+        } catch(err) { 
+            alert("Failed to save entry!"); 
+        }
     }
 
     function playAudio(isSuccess, freq = 800) {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator(); const gain = ctx.createGain();
-        osc.type = isSuccess ? "sine" : "square"; osc.frequency.value = isSuccess ? freq : 150;
-        osc.connect(gain); gain.connect(ctx.destination); osc.start();
-        setTimeout(() => osc.stop(), isSuccess ? 200 : 500);
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.type = isSuccess ? "sine" : "square"; osc.frequency.value = isSuccess ? freq : 150;
+            osc.connect(gain); gain.connect(ctx.destination); osc.start();
+            setTimeout(() => osc.stop(), isSuccess ? 200 : 500);
+        } catch(e) {}
     }
 </script>
 
